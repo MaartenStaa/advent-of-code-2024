@@ -2,11 +2,56 @@ fn main() {
     let input = include_str!("input.txt");
 
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 fn part1(input: &str) -> usize {
     let mut safe = 0;
 
+    for report in input.lines() {
+        if !is_report_safe(
+            report
+                .split_ascii_whitespace()
+                .map(|x| x.parse::<isize>().unwrap()),
+        ) {
+            continue;
+        }
+
+        safe += 1;
+    }
+
+    safe
+}
+
+fn part2(input: &str) -> usize {
+    let mut safe = 0;
+
+    for report in input.lines() {
+        // First check if the report is safe as it is
+        let levels = report
+            .split_ascii_whitespace()
+            .map(|x| x.parse::<isize>().unwrap())
+            .collect::<Vec<_>>();
+        if is_report_safe(levels.iter().copied()) {
+            safe += 1;
+            continue;
+        }
+
+        // Try with the problem dampener, allowing one value to be removed
+        for i in 0..levels.len() {
+            let mut levels = levels.clone();
+            levels.remove(i);
+            if is_report_safe(levels.iter().copied()) {
+                safe += 1;
+                break;
+            }
+        }
+    }
+
+    safe
+}
+
+fn is_report_safe(levels: impl Iterator<Item = isize>) -> bool {
     #[derive(Debug)]
     enum ReportState {
         New,
@@ -17,58 +62,51 @@ fn part1(input: &str) -> usize {
 
     const SAFE_DIFF_RANGE: std::ops::RangeInclusive<isize> = 1..=3;
 
-    'reports: for report in input.lines() {
-        let mut report_state = ReportState::New;
+    let mut report_state = ReportState::New;
 
-        for level in report
-            .split_ascii_whitespace()
-            .map(|x| x.parse::<isize>().unwrap())
-        {
-            match report_state {
-                ReportState::New => {
-                    report_state = ReportState::Started(level);
+    for level in levels {
+        match report_state {
+            ReportState::New => {
+                report_state = ReportState::Started(level);
+            }
+            ReportState::Started(prev) => {
+                let diff = (level - prev).abs();
+                if !SAFE_DIFF_RANGE.contains(&diff) {
+                    return false;
                 }
-                ReportState::Started(prev) => {
-                    let diff = (level - prev).abs();
-                    if !SAFE_DIFF_RANGE.contains(&diff) {
-                        continue 'reports;
-                    }
 
-                    report_state = if level > prev {
-                        ReportState::Increasing(level)
-                    } else {
-                        ReportState::Decreasing(level)
-                    };
+                report_state = if level > prev {
+                    ReportState::Increasing(level)
+                } else {
+                    ReportState::Decreasing(level)
+                };
+            }
+            ReportState::Increasing(prev) => {
+                if level < prev {
+                    return false;
                 }
-                ReportState::Increasing(prev) => {
-                    if level < prev {
-                        continue 'reports;
-                    }
-                    let diff = (level - prev).abs();
-                    if !SAFE_DIFF_RANGE.contains(&diff) {
-                        continue 'reports;
-                    }
+                let diff = (level - prev).abs();
+                if !SAFE_DIFF_RANGE.contains(&diff) {
+                    return false;
+                }
 
-                    report_state = ReportState::Increasing(level);
+                report_state = ReportState::Increasing(level);
+            }
+            ReportState::Decreasing(prev) => {
+                if level > prev {
+                    return false;
                 }
-                ReportState::Decreasing(prev) => {
-                    if level > prev {
-                        continue 'reports;
-                    }
-                    let diff = (level - prev).abs();
-                    if !SAFE_DIFF_RANGE.contains(&diff) {
-                        continue 'reports;
-                    }
+                let diff = (level - prev).abs();
+                if !SAFE_DIFF_RANGE.contains(&diff) {
+                    return false;
+                }
 
-                    report_state = ReportState::Decreasing(level);
-                }
+                report_state = ReportState::Decreasing(level);
             }
         }
-
-        safe += 1;
     }
 
-    safe
+    true
 }
 
 #[cfg(test)]
@@ -85,5 +123,10 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(part1(TEST_INPUT), 2);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(TEST_INPUT), 4);
     }
 }
