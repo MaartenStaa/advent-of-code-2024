@@ -1,10 +1,13 @@
+use std::collections::HashMap;
+
 fn main() {
     let input = include_str!("input.txt");
 
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
-fn part1(input: &str) -> usize {
+fn parse_input(input: &str) -> (Vec<usize>, Vec<usize>) {
     let mut a = Vec::with_capacity(input.lines().count());
     let mut b = Vec::with_capacity(a.capacity());
 
@@ -24,6 +27,12 @@ fn part1(input: &str) -> usize {
         b.push(right);
     }
 
+    (a, b)
+}
+
+fn part1(input: &str) -> usize {
+    let (mut a, mut b) = parse_input(input);
+
     a.sort();
     b.sort();
 
@@ -37,6 +46,25 @@ fn part1(input: &str) -> usize {
     }
 
     sum
+}
+
+fn part2(input: &str) -> usize {
+    let (a, b) = parse_input(input);
+
+    let b = {
+        let mut map = HashMap::new();
+        for &value in b.iter() {
+            *map.entry(value).or_insert(0) += 1;
+        }
+        map
+    };
+
+    let mut similarity = 0;
+    for value in a {
+        similarity += value * b.get(&value).copied().unwrap_or(0);
+    }
+
+    similarity
 }
 
 #[cfg(test)]
@@ -53,5 +81,10 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(part1(TEST_INPUT), 11);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(TEST_INPUT), 31);
     }
 }
