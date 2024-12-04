@@ -23,16 +23,23 @@ fn part1(input: &str) -> usize {
     for (y, line) in chars.split(|&c| c == '\n').enumerate() {
         let width = line.len() + 1; // Add 1 to account for the newline character
 
-        for (x, c) in line.iter().enumerate() {
-            if *c == 'X' {
-                words += check_word(&chars, x, y, width, CheckDirection::Up);
-                words += check_word(&chars, x, y, width, CheckDirection::Down);
-                words += check_word(&chars, x, y, width, CheckDirection::Left);
-                words += check_word(&chars, x, y, width, CheckDirection::Right);
-                words += check_word(&chars, x, y, width, CheckDirection::DiagonalUpLeft);
-                words += check_word(&chars, x, y, width, CheckDirection::DiagonalUpRight);
-                words += check_word(&chars, x, y, width, CheckDirection::DiagonalDownLeft);
-                words += check_word(&chars, x, y, width, CheckDirection::DiagonalDownRight);
+        for (x, &c) in line.iter().enumerate() {
+            if c == 'X' {
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::Up);
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::Down);
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::Left);
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::Right);
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::DiagonalUpLeft);
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::DiagonalUpRight);
+                words += check_word(&chars, x, y, width, "MAS", CheckDirection::DiagonalDownLeft);
+                words += check_word(
+                    &chars,
+                    x,
+                    y,
+                    width,
+                    "MAS",
+                    CheckDirection::DiagonalDownRight,
+                );
             }
         }
     }
@@ -45,50 +52,44 @@ fn check_word(
     x: usize,
     y: usize,
     width: usize,
+    word: &str,
     direction: CheckDirection,
 ) -> usize {
     let height = input.len() / width;
 
     if match direction {
-        CheckDirection::Up if y >= 3 => {
-            input[(y - 1) * width + x] == 'M'
-                && input[(y - 2) * width + x] == 'A'
-                && input[(y - 3) * width + x] == 'S'
-        }
-        CheckDirection::Down if y < height - 3 => {
-            input[(y + 1) * width + x] == 'M'
-                && input[(y + 2) * width + x] == 'A'
-                && input[(y + 3) * width + x] == 'S'
-        }
-        CheckDirection::Left if x >= 3 => {
-            input[y * width + x - 1] == 'M'
-                && input[y * width + x - 2] == 'A'
-                && input[y * width + x - 3] == 'S'
-        }
-        CheckDirection::Right if x < width - 3 => {
-            input[y * width + x + 1] == 'M'
-                && input[y * width + x + 2] == 'A'
-                && input[y * width + x + 3] == 'S'
-        }
-        CheckDirection::DiagonalUpLeft if y >= 3 && x >= 3 => {
-            input[(y - 1) * width + x - 1] == 'M'
-                && input[(y - 2) * width + x - 2] == 'A'
-                && input[(y - 3) * width + x - 3] == 'S'
-        }
-        CheckDirection::DiagonalUpRight if y >= 3 && x < width - 3 => {
-            input[(y - 1) * width + x + 1] == 'M'
-                && input[(y - 2) * width + x + 2] == 'A'
-                && input[(y - 3) * width + x + 3] == 'S'
-        }
-        CheckDirection::DiagonalDownLeft if y < height - 3 && x >= 3 => {
-            input[(y + 1) * width + x - 1] == 'M'
-                && input[(y + 2) * width + x - 2] == 'A'
-                && input[(y + 3) * width + x - 3] == 'S'
-        }
-        CheckDirection::DiagonalDownRight if y < height - 3 && x < width - 3 => {
-            input[(y + 1) * width + x + 1] == 'M'
-                && input[(y + 2) * width + x + 2] == 'A'
-                && input[(y + 3) * width + x + 3] == 'S'
+        CheckDirection::Up if y >= word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[(y - i - 1) * width + x] == c),
+        CheckDirection::Down if y < height - word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[(y + i + 1) * width + x] == c),
+        CheckDirection::Left if x >= word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[y * width + x - i - 1] == c),
+        CheckDirection::Right if x < width - word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[y * width + x + i + 1] == c),
+        CheckDirection::DiagonalUpLeft if y >= word.len() && x >= word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[(y - i - 1) * width + x - i - 1] == c),
+        CheckDirection::DiagonalUpRight if y >= word.len() && x < width - word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[(y - i - 1) * width + x + i + 1] == c),
+        CheckDirection::DiagonalDownLeft if y < height - word.len() && x >= word.len() => word
+            .chars()
+            .enumerate()
+            .all(|(i, c)| input[(y + i + 1) * width + x - i - 1] == c),
+        CheckDirection::DiagonalDownRight if y < height - word.len() && x < width - word.len() => {
+            word.chars()
+                .enumerate()
+                .all(|(i, c)| input[(y + i + 1) * width + x + i + 1] == c)
         }
         _ => false,
     } {
