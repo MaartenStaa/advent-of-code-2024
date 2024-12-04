@@ -2,6 +2,7 @@ fn main() {
     let input = include_str!("input.txt");
 
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 #[derive(Debug)]
@@ -40,6 +41,77 @@ fn part1(input: &str) -> usize {
                     "MAS",
                     CheckDirection::DiagonalDownRight,
                 );
+            }
+        }
+    }
+
+    words
+}
+
+fn part2(input: &str) -> usize {
+    let mut words = 0;
+    let chars: Vec<_> = input.chars().collect();
+
+    for (y, line) in chars.split(|&c| c == '\n').enumerate() {
+        let width = line.len() + 1; // Add 1 to account for the newline character
+
+        for (x, &c) in line.iter().enumerate() {
+            if c == 'M' {
+                if check_word(&chars, x, y, width, "AS", CheckDirection::DiagonalUpRight) == 1
+                    && line[x + 2] == 'M'
+                    && check_word(
+                        &chars,
+                        x + 2,
+                        y,
+                        width,
+                        "AS",
+                        CheckDirection::DiagonalUpLeft,
+                    ) == 1
+                {
+                    words += 1;
+                }
+
+                if check_word(&chars, x, y, width, "AS", CheckDirection::DiagonalDownRight) == 1 {
+                    if line[x + 2] == 'M'
+                        && check_word(
+                            &chars,
+                            x + 2,
+                            y,
+                            width,
+                            "AS",
+                            CheckDirection::DiagonalDownLeft,
+                        ) == 1
+                    {
+                        words += 1;
+                    }
+
+                    if chars[(y + 2) * width + x] == 'M'
+                        && check_word(
+                            &chars,
+                            x,
+                            y + 2,
+                            width,
+                            "AS",
+                            CheckDirection::DiagonalUpRight,
+                        ) == 1
+                    {
+                        words += 1;
+                    }
+                }
+
+                if check_word(&chars, x, y, width, "AS", CheckDirection::DiagonalDownLeft) == 1
+                    && chars[(y + 2) * width + x] == 'M'
+                    && check_word(
+                        &chars,
+                        x,
+                        y + 2,
+                        width,
+                        "AS",
+                        CheckDirection::DiagonalUpLeft,
+                    ) == 1
+                {
+                    words += 1;
+                }
             }
         }
     }
@@ -117,5 +189,10 @@ MXMXAXMASX";
     #[test]
     fn test_day4_part1() {
         assert_eq!(part1(TEST_INPUT), 18);
+    }
+
+    #[test]
+    fn test_day4_part2() {
+        assert_eq!(part2(TEST_INPUT), 9);
     }
 }
