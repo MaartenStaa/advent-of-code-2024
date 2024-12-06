@@ -3,8 +3,9 @@ use std::collections::HashSet;
 fn main() {
     let input = include_str!("input.txt");
 
-    println!("Part 1: {}", part1(input));
-    println!("Part 2: {}", part2(input));
+    let positions_visited = part1(input);
+    println!("Part 1: {}", positions_visited.len());
+    println!("Part 2: {}", part2(input, positions_visited));
 }
 
 #[derive(Debug)]
@@ -61,7 +62,7 @@ enum Direction {
     West,
 }
 
-fn part1(input: &str) -> usize {
+fn part1(input: &str) -> HashSet<(isize, isize)> {
     let Field { grid, mut guard } = parse_input(input);
     let width = input.lines().next().unwrap().len();
     let height = input.lines().count();
@@ -81,24 +82,19 @@ fn part1(input: &str) -> usize {
         }
     }
 
-    unique_positions.len()
+    unique_positions
 }
 
-fn part2(input: &str) -> usize {
+fn part2(input: &str, positions_ever_visited: HashSet<(isize, isize)>) -> usize {
     let Field { grid, guard } = parse_input(input);
     let width = input.lines().next().unwrap().len();
     let height = input.lines().count();
 
-    grid.iter()
-        .enumerate()
-        .filter(|(_, &has_block)| !has_block)
-        .filter(|(i, _)| {
-            let x = i % width;
-            let y = i / width;
-
-            guard.x as usize != x || guard.y as usize != y
-        })
-        .filter(|(i, _)| {
+    positions_ever_visited
+        .iter()
+        .filter(|(x, y)| guard.x != *x || guard.y != *y)
+        .map(|(x, y)| (y * width as isize + x) as usize)
+        .filter(|i| {
             let mut grid = grid.clone();
             grid[*i] = true;
             let mut guard = guard.clone();
@@ -196,11 +192,12 @@ mod tests {
 
     #[test]
     fn test_day6_part1() {
-        assert_eq!(part1(TEST_INPUT), 41);
+        assert_eq!(part1(TEST_INPUT).len(), 41);
     }
 
     #[test]
     fn test_day6_part2() {
-        assert_eq!(part2(TEST_INPUT), 6);
+        let positions_ever_visited = part1(TEST_INPUT);
+        assert_eq!(part2(TEST_INPUT, positions_ever_visited), 6);
     }
 }
