@@ -4,6 +4,7 @@ fn main() {
     let input = include_str!("input.txt");
 
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 #[derive(Debug)]
@@ -12,7 +13,7 @@ struct Field {
     guard: Guard,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Guard {
     x: isize,
     y: isize,
@@ -52,7 +53,7 @@ impl Guard {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Copy, Eq, Hash)]
 enum Direction {
     North,
     East,
@@ -81,6 +82,49 @@ fn part1(input: &str) -> usize {
     }
 
     unique_positions.len()
+}
+
+fn part2(input: &str) -> usize {
+    let Field { grid, guard } = parse_input(input);
+    let width = input.lines().next().unwrap().len();
+    let height = input.lines().count();
+
+    grid.iter()
+        .enumerate()
+        .filter(|(_, &has_block)| !has_block)
+        .filter(|(i, _)| {
+            let x = i % width;
+            let y = i / width;
+
+            guard.x as usize != x || guard.y as usize != y
+        })
+        .filter(|(i, _)| {
+            let mut grid = grid.clone();
+            grid[*i] = true;
+            let mut guard = guard.clone();
+
+            let mut unique_positions = HashSet::new();
+            loop {
+                unique_positions.insert((guard.x, guard.y, guard.direction));
+
+                if guard.has_block_in_front(&grid, width, height) {
+                    guard.turn_right()
+                } else {
+                    guard.step_forward()
+                }
+
+                if guard.y < 0
+                    || guard.y as usize >= height
+                    || guard.x < 0
+                    || guard.x as usize >= width
+                {
+                    break false;
+                } else if unique_positions.contains(&(guard.x, guard.y, guard.direction)) {
+                    break true;
+                }
+            }
+        })
+        .count()
 }
 
 fn parse_input(input: &str) -> Field {
@@ -153,5 +197,10 @@ mod tests {
     #[test]
     fn test_day6_part1() {
         assert_eq!(part1(TEST_INPUT), 41);
+    }
+
+    #[test]
+    fn test_day6_part2() {
+        assert_eq!(part2(TEST_INPUT), 6);
     }
 }
