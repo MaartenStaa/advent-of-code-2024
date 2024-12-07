@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::collections::HashSet;
 
 fn main() {
@@ -91,7 +92,7 @@ fn part2(input: &str, positions_ever_visited: HashSet<(isize, isize)>) -> usize 
     let height = input.lines().count();
 
     positions_ever_visited
-        .iter()
+        .par_iter()
         .filter(|(x, y)| guard.x != *x || guard.y != *y)
         .map(|(x, y)| (y * width as isize + x) as usize)
         .filter(|i| {
