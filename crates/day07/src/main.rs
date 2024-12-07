@@ -5,6 +5,7 @@ fn main() {
     let input = include_str!("input.txt");
 
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 #[derive(Debug)]
@@ -17,6 +18,7 @@ struct Equation {
 enum Operator {
     Add,
     Multiply,
+    Concatenate,
 }
 
 impl Equation {
@@ -31,9 +33,15 @@ impl Equation {
         }
     }
 
-    fn solve(&self) -> Option<Vec<Operator>> {
+    fn solve(&self, allow_concatenation: bool) -> Option<Vec<Operator>> {
         'outer: for operators in (0..self.components.len())
-            .map(|_| vec![Operator::Add, Operator::Multiply])
+            .map(|_| {
+                if allow_concatenation {
+                    vec![Operator::Add, Operator::Multiply, Operator::Concatenate]
+                } else {
+                    vec![Operator::Add, Operator::Multiply]
+                }
+            })
             .multi_cartesian_product()
         {
             let mut result = self.components[0];
@@ -41,6 +49,10 @@ impl Equation {
                 match operators[i] {
                     Operator::Add => result += component,
                     Operator::Multiply => result *= component,
+                    Operator::Concatenate => {
+                        let component_digits = component.checked_ilog10().unwrap_or(0) + 1;
+                        result = result * 10usize.pow(component_digits) + component;
+                    }
                 }
 
                 if result > self.expected {
@@ -61,7 +73,15 @@ fn part1(input: &str) -> usize {
     let equations: Vec<Equation> = input.lines().map(Equation::from_str).collect();
     equations
         .par_iter()
-        .filter_map(|equation| equation.solve().map(|_| equation.expected))
+        .filter_map(|equation| equation.solve(false).map(|_| equation.expected))
+        .sum()
+}
+
+fn part2(input: &str) -> usize {
+    let equations: Vec<Equation> = input.lines().map(Equation::from_str).collect();
+    equations
+        .par_iter()
+        .filter_map(|equation| equation.solve(true).map(|_| equation.expected))
         .sum()
 }
 
@@ -82,5 +102,10 @@ mod tests {
     #[test]
     fn test_day7_part1() {
         assert_eq!(part1(TEST_INPUT), 3749);
+    }
+
+    #[test]
+    fn test_day7_part2() {
+        assert_eq!(part2(TEST_INPUT), 11387);
     }
 }
