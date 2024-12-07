@@ -14,4 +14,4 @@ Cargo.lock
 *.pdb
 
 # AOC inputs
-crates/*/input.txt
+crates/**/input.txt
