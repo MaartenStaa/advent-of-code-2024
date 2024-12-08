@@ -5,6 +5,7 @@ fn main() {
     let input = parse_input(input);
 
     println!("Part 1: {}", part1(&input));
+    println!("Part 2: {}", part2(&input));
 }
 
 #[derive(Debug)]
@@ -20,7 +21,7 @@ struct Antenna {
     point: Point,
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
 struct Point {
     x: usize,
     y: usize,
@@ -67,6 +68,66 @@ fn part1(input: &Input) -> usize {
                             x: antinode2_x as usize,
                             y: antinode2_y as usize,
                         });
+                    }
+
+                    antinode_points.into_iter()
+                })
+            })
+        })
+        .collect();
+
+    antinode_points.len()
+}
+
+fn part2(input: &Input) -> usize {
+    let Input {
+        grid_width,
+        grid_height,
+        antenna_map,
+    } = input;
+
+    let antinode_points: HashSet<_> = antenna_map
+        .values()
+        .filter(|points| points.len() > 1)
+        .flat_map(|points| {
+            points.iter().enumerate().flat_map(|(i, point_a)| {
+                points.iter().skip(i + 1).flat_map(move |point_b| {
+                    let mut antinode_points = vec![point_a.clone(), point_b.clone()];
+                    let x_diff = point_b.x as isize - point_a.x as isize;
+                    let y_diff = point_b.y as isize - point_a.y as isize;
+
+                    for i in 1.. {
+                        let antinode1_x = point_a.x as isize - x_diff * i;
+                        let antinode1_y = point_a.y as isize - y_diff * i;
+                        if antinode1_x >= 0
+                            && antinode1_y >= 0
+                            && antinode1_x < *grid_width as isize
+                            && antinode1_y < *grid_height as isize
+                        {
+                            antinode_points.push(Point {
+                                x: antinode1_x as usize,
+                                y: antinode1_y as usize,
+                            });
+                        } else {
+                            break;
+                        }
+                    }
+
+                    for i in 1.. {
+                        let antinode2_x = point_b.x as isize + x_diff * i;
+                        let antinode2_y = point_b.y as isize + y_diff * i;
+                        if antinode2_x >= 0
+                            && antinode2_y >= 0
+                            && antinode2_x < *grid_width as isize
+                            && antinode2_y < *grid_height as isize
+                        {
+                            antinode_points.push(Point {
+                                x: antinode2_x as usize,
+                                y: antinode2_y as usize,
+                            });
+                        } else {
+                            break;
+                        }
                     }
 
                     antinode_points.into_iter()
@@ -134,5 +195,11 @@ mod tests {
     fn test_day8_part1() {
         let input = parse_input(TEST_INPUT);
         assert_eq!(part1(&input), 14);
+    }
+
+    #[test]
+    fn test_day8_part2() {
+        let input = parse_input(TEST_INPUT);
+        assert_eq!(part2(&input), 34);
     }
 }
