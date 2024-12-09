@@ -5,55 +5,13 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
-fn part1(input: &str) -> usize {
-    let mut blocks = Vec::with_capacity(input.len());
-    let mut file_id = 0;
-    let mut is_file = true;
-
-    for c in input.chars() {
-        if c == '\n' {
-            continue;
-        }
-        let n = c.to_digit(10).unwrap() as usize;
-        if is_file {
-            blocks.extend(std::iter::repeat(Some(file_id)).take(n));
-
-            file_id += 1;
-            is_file = false;
-        } else {
-            blocks.extend(std::iter::repeat(None).take(n));
-
-            is_file = true;
-        }
-    }
-
-    let mut search_empty_from = 0;
-    for i in (0..blocks.len()).rev() {
-        if blocks[i].is_some() {
-            // Find the first empty spot
-            let empty_slot = match blocks
-                .iter()
-                .skip(search_empty_from)
-                .position(|x| x.is_none())
-            {
-                Some(x) => x,
-                None => break,
-            } + search_empty_from;
-            search_empty_from = empty_slot;
-
-            blocks.swap_remove(empty_slot);
-        }
-    }
-
-    checksum(blocks)
+#[derive(Debug)]
+enum Block {
+    File { id: usize, length: usize },
+    Empty { length: usize },
 }
 
-fn part2(input: &str) -> usize {
-    enum Block {
-        File { id: usize, length: usize },
-        Empty { length: usize },
-    }
-
+fn parse_blocks(input: &str) -> Vec<Block> {
     let mut blocks = Vec::new();
     let mut file_id = 0;
     let mut is_file = true;
@@ -77,6 +35,46 @@ fn part2(input: &str) -> usize {
             is_file = true;
         }
     }
+
+    blocks
+}
+
+fn blocks_to_flat_list(blocks: Vec<Block>) -> Vec<Option<usize>> {
+    blocks
+        .into_iter()
+        .flat_map(|x| match x {
+            Block::File { id, length } => vec![Some(id); length],
+            Block::Empty { length } => vec![None; length],
+        })
+        .collect()
+}
+
+fn part1(input: &str) -> usize {
+    let mut blocks = blocks_to_flat_list(parse_blocks(input));
+
+    let mut search_empty_from = 0;
+    for i in (0..blocks.len()).rev() {
+        if blocks[i].is_some() {
+            // Find the first empty spot
+            let empty_slot = match blocks
+                .iter()
+                .skip(search_empty_from)
+                .position(|x| x.is_none())
+            {
+                Some(x) => x,
+                None => break,
+            } + search_empty_from;
+            search_empty_from = empty_slot;
+
+            blocks.swap_remove(empty_slot);
+        }
+    }
+
+    checksum(blocks)
+}
+
+fn part2(input: &str) -> usize {
+    let mut blocks = parse_blocks(input);
 
     for i in (0..blocks.len()).rev() {
         if let Block::File { length, .. } = &blocks[i] {
@@ -116,15 +114,7 @@ fn part2(input: &str) -> usize {
         }
     }
 
-    let blocks = blocks
-        .into_iter()
-        .flat_map(|x| match x {
-            Block::File { id, length } => vec![Some(id); length],
-            Block::Empty { length } => vec![None; length],
-        })
-        .collect();
-
-    checksum(blocks)
+    checksum(blocks_to_flat_list(blocks))
 }
 
 fn checksum(blocks: Vec<Option<usize>>) -> usize {
