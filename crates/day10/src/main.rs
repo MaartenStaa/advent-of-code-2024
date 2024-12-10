@@ -29,7 +29,7 @@ fn part1(input: &str) -> usize {
     grid.iter()
         .enumerate()
         .filter(|(_, &v)| v == 0)
-        .map(|(i, &v)| trail(v, i, &grid, width, height).len())
+        .map(|(i, &v)| HashSet::<usize>::from_iter(trail(v, i, &grid, width, height)).len())
         .sum()
 }
 
@@ -39,28 +39,22 @@ fn part2(input: &str) -> usize {
     grid.iter()
         .enumerate()
         .filter(|(_, &v)| v == 0)
-        .map(|(i, &v)| trail2(v, i, &grid, width, height))
+        .map(|(i, &v)| trail(v, i, &grid, width, height).len())
         .sum()
 }
 
-fn trail(
-    current_value: u32,
-    i: usize,
-    grid: &[u32],
-    width: usize,
-    height: usize,
-) -> HashSet<usize> {
+fn trail(current_value: u32, i: usize, grid: &[u32], width: usize, height: usize) -> Vec<usize> {
     let x = i % width;
     let y = i / width;
 
     eprintln!("trail {current_value} @ {x}x{y}");
     if current_value == 9 {
-        return HashSet::from_iter([i]);
+        return vec![i];
     }
 
     let next = current_value + 1;
 
-    let mut terminal_positions = HashSet::new();
+    let mut terminal_positions = Vec::new();
 
     // Check all four directions
     // Up
@@ -81,40 +75,6 @@ fn trail(
     }
 
     terminal_positions
-}
-
-fn trail2(current_value: u32, i: usize, grid: &[u32], width: usize, height: usize) -> usize {
-    let x = i % width;
-    let y = i / width;
-
-    eprintln!("trail {current_value} @ {x}x{y}");
-    if current_value == 9 {
-        return 1;
-    }
-
-    let next = current_value + 1;
-
-    let mut count = 0;
-
-    // Check all four directions
-    // Up
-    if y > 0 && grid[i - width] == next {
-        count += trail2(next, i - width, grid, width, height);
-    }
-    // Right
-    if x < width - 1 && grid[i + 1] == next {
-        count += trail2(next, i + 1, grid, width, height);
-    }
-    // Down
-    if y < height - 1 && grid[i + width] == next {
-        count += trail2(next, i + width, grid, width, height);
-    }
-    // Left
-    if x > 0 && grid[i - 1] == next {
-        count += trail2(next, i - 1, grid, width, height);
-    }
-
-    count
 }
 
 #[cfg(test)]
