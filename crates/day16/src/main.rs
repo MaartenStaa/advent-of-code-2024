@@ -1,10 +1,13 @@
-use pathfinding::prelude::astar;
+use std::collections::HashSet;
+
+use pathfinding::prelude::{astar_bag, AstarSolution};
 
 fn main() {
     let input = include_str!("input.txt");
     let input = parse(input);
 
     println!("Part 1: {}", part1(&input));
+    println!("Part 2: {}", part2(&input));
 }
 
 #[derive(Debug)]
@@ -90,15 +93,30 @@ fn parse(input: &str) -> Maze {
 }
 
 fn part1(input: &Maze) -> usize {
-    // Find the cheapest path
+    let (_, cost) = route(input).expect("no solution found");
+    cost
+}
 
+fn part2(input: &Maze) -> usize {
+    let (solution, _) = route(input).expect("no solution found");
+
+    let unique_points: HashSet<_> = solution
+        .into_iter()
+        .flat_map(|ps| ps.into_iter().map(|p| Point { x: p.x, y: p.y }))
+        .collect();
+
+    unique_points.len()
+}
+
+fn route(input: &Maze) -> Option<(AstarSolution<PointAndDirection>, usize)> {
+    // Find the cheapest paths
     let start = PointAndDirection {
         x: input.start.x,
         y: input.start.y,
         direction: Direction::Right,
     };
 
-    astar(
+    astar_bag(
         &start,
         |p| {
             let mut neighbors = Vec::new();
@@ -173,8 +191,6 @@ fn part1(input: &Maze) -> usize {
         |p| manhattan_distance(&Point { x: p.x, y: p.y }, &input.end),
         |p| p.x == input.end.x && p.y == input.end.y,
     )
-    .unwrap()
-    .1
 }
 
 fn manhattan_distance(a: &Point, b: &Point) -> usize {
@@ -185,10 +201,7 @@ fn manhattan_distance(a: &Point, b: &Point) -> usize {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_day16_part1() {
-        let input = parse(
-            r#"###############
+    const TEST_INPUT_1: &str = "###############
 #.......#....E#
 #.#.###.#.###.#
 #.....#.#...#.#
@@ -202,9 +215,40 @@ mod tests {
 #.....#...#.#.#
 #.###.#.#.#.#.#
 #S..#.....#...#
-###############"#,
-        );
+###############";
+    const TEST_INPUT_2: &str = "#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#.#
+#.#.#.#...#...#.#
+#.#.#.#.###.#.#.#
+#...#.#.#.....#.#
+#.#.#.#.#.#####.#
+#.#...#.#.#.....#
+#.#.#####.#.###.#
+#.#.#.......#...#
+#.#.###.#####.###
+#.#.#...#.....#.#
+#.#.#.#####.###.#
+#.#.#.........#.#
+#.#.#.#########.#
+#S#.............#
+#################";
 
+    #[test]
+    fn test_day16_part1() {
+        let input = parse(TEST_INPUT_1);
         assert_eq!(part1(&input), 7036);
+
+        let input = parse(TEST_INPUT_2);
+        assert_eq!(part1(&input), 11048);
+    }
+
+    #[test]
+    fn test_day16_part2() {
+        let input = parse(TEST_INPUT_1);
+        assert_eq!(part2(&input), 45);
+
+        let input = parse(TEST_INPUT_2);
+        assert_eq!(part2(&input), 64);
     }
 }
