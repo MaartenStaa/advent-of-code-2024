@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = ["crates/day01", "crates/day02", "crates/day03", "crates/day04", "crates/day05", "crates/day06", "crates/day07", "crates/day08", "crates/day09", "crates/day10", "crates/day11", "crates/day12", "crates/day13"]
+members = ["crates/day01", "crates/day02", "crates/day03", "crates/day04", "crates/day05", "crates/day06", "crates/day07", "crates/day08", "crates/day09", "crates/day10", "crates/day11", "crates/day12", "crates/day13", "crates/day16"]
