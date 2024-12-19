@@ -1,5 +1,4 @@
 use cached::proc_macro::cached;
-use regex::Regex;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -19,20 +18,9 @@ fn parse(input: &str) -> (Vec<String>, Vec<String>) {
 }
 
 fn part1(patterns: &[String], desired_designs: &[String]) -> usize {
-    let mut patterns_regex = "^(".to_string();
-    for (i, pattern) in patterns.iter().enumerate() {
-        if i != 0 {
-            patterns_regex.push('|');
-        }
-        patterns_regex.push_str(pattern);
-    }
-    patterns_regex.push_str(")*$");
-
-    let patterns_regex = Regex::new(&patterns_regex).unwrap();
-
     desired_designs
         .iter()
-        .filter(|design| patterns_regex.is_match(design))
+        .filter(|design| num_possible_combinations(design, patterns) > 0)
         .count()
 }
 
