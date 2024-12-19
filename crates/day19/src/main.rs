@@ -1,3 +1,4 @@
+use cached::proc_macro::cached;
 use regex::Regex;
 
 fn main() {
@@ -5,6 +6,7 @@ fn main() {
     let (patterns, desired_designs) = parse(input);
 
     println!("Part 1: {}", part1(&patterns, &desired_designs));
+    println!("Part 2: {}", part2(&patterns, &desired_designs));
 }
 
 fn parse(input: &str) -> (Vec<String>, Vec<String>) {
@@ -34,14 +36,34 @@ fn part1(patterns: &[String], desired_designs: &[String]) -> usize {
         .count()
 }
 
+fn part2(patterns: &[String], desired_designs: &[String]) -> usize {
+    desired_designs
+        .iter()
+        .map(|design| num_possible_combinations(design, patterns))
+        .sum()
+}
+
+#[cached(
+    key = "(String, Vec<String>)",
+    convert = r#"{ (design.to_string(), patterns.to_vec()) }"#
+)]
+fn num_possible_combinations(design: &str, patterns: &[String]) -> usize {
+    if design.is_empty() {
+        return 1;
+    }
+
+    patterns
+        .iter()
+        .filter(|pattern| design.starts_with(pattern.as_str()))
+        .map(|pattern| num_possible_combinations(&design[pattern.len()..], patterns))
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_day19_part1() {
-        let (pat, des) = parse(
-            "r, wr, b, g, bwu, rb, gb, br
+    const TEST_INPUT: &str = "r, wr, b, g, bwu, rb, gb, br
 
 brwrr
 bggr
@@ -50,8 +72,17 @@ rrbgbr
 ubwu
 bwurrg
 brgr
-bbrgwb",
-        );
+bbrgwb";
+
+    #[test]
+    fn test_day19_part1() {
+        let (pat, des) = parse(TEST_INPUT);
         assert_eq!(part1(&pat, &des), 6);
+    }
+
+    #[test]
+    fn test_day19_part2() {
+        let (pat, des) = parse(TEST_INPUT);
+        assert_eq!(part2(&pat, &des), 16);
     }
 }
